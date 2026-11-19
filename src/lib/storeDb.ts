@@ -19,9 +19,6 @@ export interface StoreDbData {
   addresses: any[];
 }
 
-const DEFAULT_KV_URL = 'https://settling-bobcat-207236.upstash.io';
-const DEFAULT_KV_TOKEN = 'gQAAAAAAAymEAQIgcDFjYWQxMjFjYmNjZjc0ZGU4YTA0OWYzMTExMDhhZWIwNQ';
-
 function generateId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`;
 }
@@ -85,7 +82,7 @@ class StoreDatabase {
           try {
             fs.writeFileSync(this.dbPath, content, 'utf-8');
           } catch (e) {
-            console.warn('Could not seed serverless /tmp database file:', e);
+            console.warn('Could not seed local database file:', e);
           }
         }
         return { ...this.getInitialData(), ...parsed };
@@ -102,9 +99,20 @@ class StoreDatabase {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
+      const serialized = JSON.stringify(this.data, null, 2);
       const tmpPath = `${this.dbPath}.tmp`;
-      fs.writeFileSync(tmpPath, JSON.stringify(this.data, null, 2), 'utf-8');
+      fs.writeFileSync(tmpPath, serialized, 'utf-8');
       fs.renameSync(tmpPath, this.dbPath);
+
+      // Keep sourceDbPath synchronized if different and writable
+      if (this.dbPath !== this.sourceDbPath) {
+        try {
+          const sourceDir = path.dirname(this.sourceDbPath);
+          if (fs.existsSync(sourceDir)) {
+            fs.writeFileSync(this.sourceDbPath, serialized, 'utf-8');
+          }
+        } catch {}
+      }
     } catch (err: any) {
       // If error is EROFS (Read-only filesystem on Vercel/lambda), redirect to /tmp
       if (err?.code === 'EROFS' || err?.message?.includes('read-only')) {
@@ -119,63 +127,19 @@ class StoreDatabase {
         console.error('StoreDatabase save error:', err);
       }
     }
-
-    // Cloud sync if Vercel KV / Upstash Redis is connected
-    this.syncToCloud();
   }
 
-  private syncToCloud(): void {
-    const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || DEFAULT_KV_URL;
-    const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || DEFAULT_KV_TOKEN;
-    if (kvUrl && kvToken) {
-      try {
-        fetch(kvUrl, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${kvToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(['SET', 'chote_store_db', JSON.stringify(this.data)]),
-        }).catch((e) => console.warn('KV sync error:', e));
-      } catch (err) {
-        console.warn('Could not dispatch KV sync:', err);
-      }
-    }
-  }
-
-  public async ensureFreshData(): Promise<void> {
-    const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || DEFAULT_KV_URL;
-    const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || DEFAULT_KV_TOKEN;
-    if (kvUrl && kvToken) {
-      try {
-        const res = await fetch(kvUrl, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${kvToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(['GET', 'chote_store_db']),
-          cache: 'no-store',
-        });
-        const json = await res.json();
-        if (json && json.result) {
-          const parsed = typeof json.result === 'string' ? JSON.parse(json.result) : json.result;
-          this.data = { ...this.getInitialData(), ...parsed };
-          try {
-            fs.writeFileSync(this.dbPath, JSON.stringify(this.data, null, 2), 'utf-8');
-          } catch {}
-          return;
-        }
-      } catch (err) {
-        // Fallback to local
-      }
-    }
-
+  public ensureFreshData(): void {
     if (fs.existsSync(this.dbPath)) {
       try {
         const content = fs.readFileSync(this.dbPath, 'utf-8');
-        this.data = { ...this.getInitialData(), ...JSON.parse(content) };
-      } catch {}
+        const parsed = JSON.parse(content);
+        if (parsed && typeof parsed === 'object') {
+          this.data = { ...this.getInitialData(), ...parsed };
+        }
+      } catch (err) {
+        console.warn('Could not read local database file:', err);
+      }
     }
   }
 

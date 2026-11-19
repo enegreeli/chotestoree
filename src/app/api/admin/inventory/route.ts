@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser, isStaffOrAdmin } from '@/lib/auth';
+import { storeDb } from '@/lib/storeDb';
 
 export const dynamic = 'force-dynamic';
 
@@ -182,6 +183,7 @@ export async function POST(req: Request) {
       success: true,
       message: 'Estoque atualizado com sucesso!',
       data: result,
+      snapshot: storeDb.getRawData(),
     });
   } catch (error: any) {
     console.error('Inventory movement error:', error);

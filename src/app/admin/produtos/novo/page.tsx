@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, Plus, Trash2, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
 import ImageUploader from '@/components/ImageUploader';
+import { saveLocalSnapshot } from '@/lib/clientStorage';
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function NewProductPage() {
   const [showQuickCat, setShowQuickCat] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   // Form fields
   const [name, setName] = useState('');
@@ -159,7 +161,15 @@ export default function NewProductPage() {
         throw new Error(data.error || 'Erro ao cadastrar produto');
       }
 
-      router.push('/admin/produtos');
+      // 100% Local: Save snapshot immediately to IndexedDB and localStorage
+      if (data.snapshot) {
+        await saveLocalSnapshot(data.snapshot);
+      }
+
+      setSuccess('✓ Produto cadastrado e gravado com sucesso no armazenamento local!');
+      setTimeout(() => {
+        router.push('/admin/produtos');
+      }, 700);
     } catch (err: any) {
       setError(err.message || 'Erro ao cadastrar produto.');
       setLoading(false);
@@ -179,6 +189,13 @@ export default function NewProductPage() {
           <h1 className="text-2xl font-black text-neutral-900 tracking-tight">Cadastrar Novo Produto</h1>
         </div>
       </div>
+
+      {success && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{success}</span>
+        </div>
+      )}
 
       {error && (
         <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-semibold flex items-center gap-2">

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { FolderTree, Plus, Edit, Trash2, X, CheckCircle, ImageIcon } from 'lucide-react';
 import ImageUploader from '@/components/ImageUploader';
+import { saveLocalSnapshot } from '@/lib/clientStorage';
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -70,6 +71,9 @@ export default function AdminCategoriesPage() {
         alert(data.error || 'Erro ao excluir');
         return;
       }
+      if (data.snapshot) {
+        await saveLocalSnapshot(data.snapshot);
+      }
       fetchCategories();
     } catch {
       alert('Erro ao excluir');
@@ -103,6 +107,10 @@ export default function AdminCategoriesPage() {
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Erro ao salvar categoria');
+      }
+
+      if (data.snapshot) {
+        await saveLocalSnapshot(data.snapshot);
       }
 
       setModalOpen(false);

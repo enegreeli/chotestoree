@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser, isStaffOrAdmin } from '@/lib/auth';
+import { storeDb } from '@/lib/storeDb';
 
 export async function GET(
   req: Request,
@@ -181,7 +182,11 @@ export async function PUT(
       return prod;
     });
 
-    return NextResponse.json({ success: true, product: updated });
+    return NextResponse.json({
+      success: true,
+      product: updated,
+      snapshot: storeDb.getRawData(),
+    });
   } catch (error: any) {
     console.error('Admin product update error:', error);
     return NextResponse.json({ error: error.message || 'Erro ao atualizar produto' }, { status: 400 });
@@ -209,7 +214,11 @@ export async function DELETE(
     await prisma.wishlist.deleteMany({ where: { productId: id } });
     await prisma.product.delete({ where: { id } });
 
-    return NextResponse.json({ success: true, message: 'Produto excluído permanentemente com sucesso.' });
+    return NextResponse.json({
+      success: true,
+      message: 'Produto excluído permanentemente com sucesso.',
+      snapshot: storeDb.getRawData(),
+    });
   } catch (error: any) {
     console.error('Admin delete product error:', error);
     return NextResponse.json({ error: 'Erro ao excluir produto' }, { status: 500 });

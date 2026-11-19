@@ -14,7 +14,7 @@ interface ImageUploaderProps {
  * Compresses an image file using an offscreen canvas.
  * Reduces 10MB+ phone camera photos down to crisp ~100KB web-optimized images.
  */
-function compressImage(file: File, maxWidth = 1400, quality = 0.85): Promise<string> {
+function compressImage(file: File, maxWidth = 1000, quality = 0.80): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);

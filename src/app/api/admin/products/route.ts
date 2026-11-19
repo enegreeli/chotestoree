@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser, isStaffOrAdmin } from '@/lib/auth';
+import { storeDb } from '@/lib/storeDb';
 
 export const dynamic = 'force-dynamic';
 
@@ -206,7 +207,11 @@ export async function POST(req: Request) {
       return created;
     });
 
-    return NextResponse.json({ success: true, product });
+    return NextResponse.json({
+      success: true,
+      product,
+      snapshot: storeDb.getRawData(),
+    });
   } catch (error: any) {
     console.error('Admin create product error:', error);
     return NextResponse.json({ error: error.message || 'Erro ao cadastrar produto' }, { status: 400 });

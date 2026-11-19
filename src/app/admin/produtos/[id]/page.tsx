@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, Plus, Trash2, CheckCircle, AlertCircle, Zap } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
 import ImageUploader from '@/components/ImageUploader';
+import { saveLocalSnapshot } from '@/lib/clientStorage';
 
 export default function EditProductPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -159,8 +160,13 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         throw new Error(data.error || 'Erro ao atualizar produto');
       }
 
-      setSuccess('Produto atualizado com sucesso!');
-      setTimeout(() => setSuccess(''), 3000);
+      // 100% Local: Save snapshot immediately to IndexedDB and localStorage
+      if (data.snapshot) {
+        await saveLocalSnapshot(data.snapshot);
+      }
+
+      setSuccess('✓ Alterações salvas com sucesso no armazenamento local!');
+      setTimeout(() => setSuccess(''), 3500);
     } catch (err: any) {
       setError(err.message || 'Erro ao atualizar produto.');
     } finally {

@@ -21,6 +21,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
+import { saveLocalSnapshot, markCatalogWiped } from '@/lib/clientStorage';
 
 function InventoryManagementContent() {
   const searchParams = useSearchParams();
@@ -81,9 +82,7 @@ function InventoryManagementContent() {
       });
       const data = await res.json();
       if (res.ok) {
-        localStorage.setItem('chote_master_db_explicitly_wiped', 'true');
-        localStorage.removeItem('chote_master_db_snapshot_v1');
-        localStorage.setItem('chote_master_db_count_v1', '0');
+        markCatalogWiped();
         setActionFeedback(data.message || 'Catálogo limpo com sucesso! Loja pronta para começar do zero.');
         fetchInventory();
         setTimeout(() => setActionFeedback(null), 4000);
@@ -122,6 +121,9 @@ function InventoryManagementContent() {
       const res = await fetch(`/api/admin/products/${prodId}`, { method: 'DELETE' });
       const data = await res.json();
       if (res.ok) {
+        if (data.snapshot) {
+          await saveLocalSnapshot(data.snapshot);
+        }
         setActionFeedback(`Produto "${prodName}" excluído com sucesso!`);
         fetchInventory();
         setTimeout(() => setActionFeedback(null), 3000);

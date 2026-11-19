@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser, isStaffOrAdmin } from '@/lib/auth';
+import { storeDb } from '@/lib/storeDb';
 
 export async function POST(req: Request) {
   try {
@@ -163,6 +164,7 @@ export async function POST(req: Request) {
       success: true,
       message: 'Venda manual registrada com sucesso e estoque atualizado!',
       order,
+      snapshot: storeDb.getRawData(),
     });
   } catch (error: any) {
     console.error('Manual sale error:', error);

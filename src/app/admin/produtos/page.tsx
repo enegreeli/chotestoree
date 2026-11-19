@@ -15,6 +15,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
+import { saveLocalSnapshot, markCatalogWiped } from '@/lib/clientStorage';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -76,12 +77,15 @@ export default function AdminProductsPage() {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Tem certeza que deseja excluir ou arquivar o produto "${name}"?`)) return;
+    if (!confirm(`Tem certeza que deseja excluir o produto "${name}"?`)) return;
 
     try {
       const res = await fetch(`/api/admin/products/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (res.ok) {
+        if (data.snapshot) {
+          await saveLocalSnapshot(data.snapshot);
+        }
         setActionNotice(data.message || 'Produto removido com sucesso.');
         fetchProducts();
         setTimeout(() => setActionNotice(null), 3000);
@@ -128,9 +132,7 @@ export default function AdminProductsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        localStorage.setItem('chote_master_db_explicitly_wiped', 'true');
-        localStorage.removeItem('chote_master_db_snapshot_v1');
-        localStorage.setItem('chote_master_db_count_v1', '0');
+        markCatalogWiped();
         setActionNotice(data.message || 'Catálogo limpo com sucesso! Loja pronta para começar do zero.');
         fetchProducts();
         setTimeout(() => setActionNotice(null), 4000);

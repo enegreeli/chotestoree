@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Settings, Save, CheckCircle, AlertCircle, Zap, Trash2, Download, Database, RefreshCw, Upload } from 'lucide-react';
+import { saveLocalSnapshot, markCatalogWiped } from '@/lib/clientStorage';
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<Record<string, string>>({
@@ -57,7 +58,11 @@ export default function AdminSettingsPage() {
         throw new Error(data.error || 'Erro ao salvar configurações');
       }
 
-      setFeedback({ text: 'Configurações da loja salvas com sucesso no banco de dados!', error: false });
+      if (data.snapshot) {
+        await saveLocalSnapshot(data.snapshot);
+      }
+
+      setFeedback({ text: 'Configurações da loja salvas com sucesso no banco de dados local!', error: false });
       setTimeout(() => setFeedback(null), 3000);
     } catch (err: any) {
       setFeedback({ text: err.message || 'Erro ao salvar', error: true });
@@ -79,9 +84,7 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       if (res.ok) {
         if (action === 'wipe_products' || action === 'wipe_all_data') {
-          localStorage.setItem('chote_master_db_explicitly_wiped', 'true');
-          localStorage.removeItem('chote_master_db_snapshot_v1');
-          localStorage.setItem('chote_master_db_count_v1', '0');
+          markCatalogWiped();
         }
         setFeedback({ text: data.message || 'Ação executada com sucesso!', error: false });
       } else {

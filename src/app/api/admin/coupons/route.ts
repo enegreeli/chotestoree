@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser, isStaffOrAdmin } from '@/lib/auth';
+import { storeDb } from '@/lib/storeDb';
 
 export async function GET() {
   try {
@@ -52,7 +53,11 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, coupon });
+    return NextResponse.json({
+      success: true,
+      coupon,
+      snapshot: storeDb.getRawData(),
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Erro ao criar cupom' }, { status: 400 });
   }

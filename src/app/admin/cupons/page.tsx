@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tag, Plus, Trash2, CheckCircle, XCircle, X } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/formatters';
+import { saveLocalSnapshot } from '@/lib/clientStorage';
 
 export default function AdminCouponsPage() {
   const [coupons, setCoupons] = useState<any[]>([]);
@@ -37,11 +38,15 @@ export default function AdminCouponsPage() {
 
   const handleToggleActive = async (coupon: any) => {
     try {
-      await fetch(`/api/admin/coupons/${coupon.id}`, {
+      const res = await fetch(`/api/admin/coupons/${coupon.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !coupon.isActive }),
       });
+      const data = await res.json();
+      if (data.snapshot) {
+        await saveLocalSnapshot(data.snapshot);
+      }
       fetchCoupons();
     } catch {
       alert('Erro ao alterar status do cupom');
@@ -51,7 +56,11 @@ export default function AdminCouponsPage() {
   const handleDelete = async (id: string, cCode: string) => {
     if (!confirm(`Excluir permanentemente o cupom ${cCode}?`)) return;
     try {
-      await fetch(`/api/admin/coupons/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/coupons/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.snapshot) {
+        await saveLocalSnapshot(data.snapshot);
+      }
       fetchCoupons();
     } catch {
       alert('Erro ao excluir');
@@ -81,6 +90,10 @@ export default function AdminCouponsPage() {
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Erro ao criar cupom');
+      }
+
+      if (data.snapshot) {
+        await saveLocalSnapshot(data.snapshot);
       }
 
       setModalOpen(false);

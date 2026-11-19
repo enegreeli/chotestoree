@@ -2,10 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Database, Download, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
-
-const STORAGE_KEY = 'chote_master_db_snapshot_v1';
-const COUNT_KEY = 'chote_master_db_count_v1';
-const WIPED_FLAG = 'chote_master_db_explicitly_wiped';
+import { saveLocalSnapshot, loadLocalSnapshot, isCatalogExplicitlyWiped } from '@/lib/clientStorage';
 
 export default function AdminAutoSync() {
   const [productCount, setProductCount] = useState<number | null>(null);
@@ -26,51 +23,41 @@ export default function AdminAutoSync() {
 
       setProductCount(serverCount);
 
-      const localSnapshot = localStorage.getItem(STORAGE_KEY);
-      const isExplicitlyWiped = localStorage.getItem(WIPED_FLAG) === 'true';
-
-      // Case A: Server has products, save to client master storage
+      // Case A: Server has products, save to local IndexedDB + localStorage
       if (serverCount > 0) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(serverData));
-        localStorage.setItem(COUNT_KEY, serverCount.toString());
-        localStorage.removeItem(WIPED_FLAG);
+        await saveLocalSnapshot(serverData);
         setSyncStatus('saved');
         return;
       }
 
-      // Case B: Server has 0 products, but local snapshot has products and user didn't wipe
-      if (serverCount === 0 && localSnapshot && !isExplicitlyWiped) {
-        try {
-          const parsed = JSON.parse(localSnapshot);
-          if (parsed.products && parsed.products.length > 0) {
-            setSyncStatus('syncing');
-            setMessage('Restaurando produtos do catálogo...');
+      // Case B: Server has 0 products, check local snapshot for auto-heal
+      if (serverCount === 0 && !isCatalogExplicitlyWiped()) {
+        const localSnapshot = await loadLocalSnapshot();
+        if (localSnapshot && localSnapshot.products && localSnapshot.products.length > 0) {
+          setSyncStatus('syncing');
+          setMessage('Restaurando catálogo local...');
 
-            const restoreRes = await fetch('/api/admin/system/reset', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                action: 'import_json',
-                data: parsed,
-              }),
-            });
+          const restoreRes = await fetch('/api/admin/system/reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'import_json',
+              data: localSnapshot,
+            }),
+          });
 
-            if (restoreRes.ok) {
-              setProductCount(parsed.products.length);
-              setSyncStatus('restored');
-              setMessage(`${parsed.products.length} produto(s) preservados e restaurados com sucesso!`);
-              setTimeout(() => {
-                setSyncStatus('idle');
-                setMessage(null);
-                // Trigger page refresh if on products page so user sees them immediately
-                if (window.location.pathname.includes('/admin/produtos') || window.location.pathname.includes('/admin/estoque')) {
-                  window.location.reload();
-                }
-              }, 2500);
-            }
+          if (restoreRes.ok) {
+            setProductCount(localSnapshot.products.length);
+            setSyncStatus('restored');
+            setMessage(`${localSnapshot.products.length} produto(s) preservados localmente!`);
+            setTimeout(() => {
+              setSyncStatus('idle');
+              setMessage(null);
+              if (window.location.pathname.includes('/admin/produtos') || window.location.pathname.includes('/admin/estoque')) {
+                window.location.reload();
+              }
+            }, 2000);
           }
-        } catch (e) {
-          console.warn('Auto-heal restore error:', e);
         }
       }
     } catch (e) {

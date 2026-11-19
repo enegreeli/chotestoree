@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser, isStaffOrAdmin } from '@/lib/auth';
+import { storeDb } from '@/lib/storeDb';
 
 export async function PUT(
   req: Request,
@@ -27,7 +28,11 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json({ success: true, category });
+    return NextResponse.json({
+      success: true,
+      category,
+      snapshot: storeDb.getRawData(),
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Erro ao atualizar categoria' }, { status: 400 });
   }
@@ -75,7 +80,11 @@ export async function DELETE(
     }
 
     await prisma.category.delete({ where: { id } });
-    return NextResponse.json({ success: true, message: 'Categoria excluída com sucesso!' });
+    return NextResponse.json({
+      success: true,
+      message: 'Categoria excluída com sucesso!',
+      snapshot: storeDb.getRawData(),
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Erro ao excluir categoria' }, { status: 500 });
   }

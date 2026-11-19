@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser, isStaffOrAdmin } from '@/lib/auth';
+import { storeDb } from '@/lib/storeDb';
 
 export async function PUT(
   req: Request,
@@ -28,7 +29,11 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json({ success: true, coupon });
+    return NextResponse.json({
+      success: true,
+      coupon,
+      snapshot: storeDb.getRawData(),
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Erro ao atualizar cupom' }, { status: 400 });
   }
@@ -46,7 +51,11 @@ export async function DELETE(
 
     const { id } = params;
     await prisma.coupon.delete({ where: { id } });
-    return NextResponse.json({ success: true, message: 'Cupom excluído com sucesso' });
+    return NextResponse.json({
+      success: true,
+      message: 'Cupom excluído com sucesso',
+      snapshot: storeDb.getRawData(),
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Erro ao excluir cupom' }, { status: 500 });
   }

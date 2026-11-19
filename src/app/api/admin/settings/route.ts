@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser, isStaffOrAdmin } from '@/lib/auth';
+import { storeDb } from '@/lib/storeDb';
 
 export async function GET() {
   try {
@@ -38,7 +39,11 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({ success: true, message: 'Configurações atualizadas com sucesso' });
+    return NextResponse.json({
+      success: true,
+      message: 'Configurações atualizadas com sucesso',
+      snapshot: storeDb.getRawData(),
+    });
   } catch (error: any) {
     console.error('Settings update error:', error);
     return NextResponse.json({ error: 'Erro ao salvar configurações' }, { status: 500 });

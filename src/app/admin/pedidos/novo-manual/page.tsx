@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Trash2, ShoppingBag, CheckCircle, AlertCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
+import { saveLocalSnapshot } from '@/lib/clientStorage';
 
 export default function NewManualSalePage() {
   const router = useRouter();
@@ -127,6 +128,10 @@ export default function NewManualSalePage() {
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Erro ao registrar venda');
+      }
+
+      if (data.snapshot) {
+        await saveLocalSnapshot(data.snapshot);
       }
 
       router.push('/admin/pedidos');
