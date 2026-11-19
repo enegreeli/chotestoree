@@ -1,21 +1,32 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Sparkles, Flame, ShieldCheck, Trophy, ChevronRight } from 'lucide-react';
+import { ArrowRight, Sparkles, ShieldCheck, Trophy, ChevronRight } from 'lucide-react';
 import prisma from '@/lib/prisma';
-import ProductCard from '@/components/ProductCard';
+import HomeLiveProducts from '@/components/HomeLiveProducts';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+function formatProduct(p: any) {
+  const totalStock = (p.sizes || []).reduce((acc: number, s: any) => acc + (Number(s.stock) || 0), 0);
+  return {
+    ...p,
+    totalStock,
+    isOutOfStock: totalStock <= 0,
+  };
+}
 
 async function getHomeData() {
-  const [allProducts, featuredProducts, bestSellers, newReleases, promoProducts, luxuryProducts, categories] = await Promise.all([
+  const [rawAll, rawFeatured, rawBest, rawNew, rawPromo, rawLux, categories] = await Promise.all([
     prisma.product.findMany({
       where: { isActive: true },
       orderBy: { createdAt: 'desc' },
-      take: 8,
+      take: 12,
       include: {
         images: { orderBy: { order: 'asc' } },
         sizes: { orderBy: { size: 'asc' } },
+        category: true,
       },
     }),
     prisma.product.findMany({
@@ -24,6 +35,7 @@ async function getHomeData() {
       include: {
         images: { orderBy: { order: 'asc' } },
         sizes: { orderBy: { size: 'asc' } },
+        category: true,
       },
     }),
     prisma.product.findMany({
@@ -32,6 +44,7 @@ async function getHomeData() {
       include: {
         images: { orderBy: { order: 'asc' } },
         sizes: { orderBy: { size: 'asc' } },
+        category: true,
       },
     }),
     prisma.product.findMany({
@@ -40,6 +53,7 @@ async function getHomeData() {
       include: {
         images: { orderBy: { order: 'asc' } },
         sizes: { orderBy: { size: 'asc' } },
+        category: true,
       },
     }),
     prisma.product.findMany({
@@ -48,6 +62,7 @@ async function getHomeData() {
       include: {
         images: { orderBy: { order: 'asc' } },
         sizes: { orderBy: { size: 'asc' } },
+        category: true,
       },
     }),
     prisma.product.findMany({
@@ -64,6 +79,7 @@ async function getHomeData() {
       include: {
         images: { orderBy: { order: 'asc' } },
         sizes: { orderBy: { size: 'asc' } },
+        category: true,
       },
     }),
     prisma.category.findMany({
@@ -72,7 +88,15 @@ async function getHomeData() {
     }),
   ]);
 
-  return { allProducts, featuredProducts, bestSellers, newReleases, promoProducts, luxuryProducts, categories };
+  return {
+    allProducts: rawAll.map(formatProduct),
+    featuredProducts: rawFeatured.map(formatProduct),
+    bestSellers: rawBest.map(formatProduct),
+    newReleases: rawNew.map(formatProduct),
+    promoProducts: rawPromo.map(formatProduct),
+    luxuryProducts: rawLux.map(formatProduct),
+    categories,
+  };
 }
 
 export default async function HomePage() {
@@ -223,86 +247,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 2.5 DESTAQUES & CATÁLOGO GERAL */}
-      {allProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-8 border-b border-neutral-100 pb-4">
-            <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-neutral-400">
-                <Sparkles className="w-4 h-4 text-neutral-900" />
-                Catálogo Oficial & Novidades
-              </div>
-              <h2 className="text-2xl font-black text-neutral-900 tracking-tight">Coleção em Destaque</h2>
-            </div>
-            <Link
-              href="/produtos"
-              className="text-xs font-bold uppercase tracking-wider text-neutral-900 hover:text-neutral-500 transition-colors flex items-center gap-1"
-            >
-              Ver Catálogo Completo ({allProducts.length}) <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {allProducts.map((product) => (
-              <ProductCard key={product.id} product={product as any} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* 3. MAIS VENDIDOS (BEST SELLERS) */}
-      {bestSellers.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-8 border-b border-neutral-100 pb-4">
-            <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-neutral-400">
-                <Flame className="w-4 h-4 text-rose-500" />
-                Os Mantos Mais Procurados
-              </div>
-              <h2 className="text-2xl font-black text-neutral-900 tracking-tight">Mais Vendidos</h2>
-            </div>
-            <Link
-              href="/produtos?bestSeller=true"
-              className="text-xs font-bold uppercase tracking-wider text-neutral-900 hover:text-neutral-500 transition-colors flex items-center gap-1"
-            >
-              Ver Todos <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {bestSellers.map((product) => (
-              <ProductCard key={product.id} product={product as any} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* 3.1 GRIFES DE LUXO & STREETWEAR */}
-      {luxuryProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-8 border-b border-neutral-100 pb-4">
-            <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-neutral-400">
-                <Sparkles className="w-4 h-4 text-neutral-900" />
-                Alta Moda & Estilo Urbano
-              </div>
-              <h2 className="text-2xl font-black text-neutral-900 tracking-tight">Grifes de Luxo & Streetwear</h2>
-            </div>
-            <Link
-              href="/produtos?category=grifes-luxo"
-              className="text-xs font-bold uppercase tracking-wider text-neutral-900 hover:text-neutral-500 transition-colors flex items-center gap-1"
-            >
-              Ver Todas as Grifes <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {luxuryProducts.map((product) => (
-              <ProductCard key={product.id} product={product as any} />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* 2.5 PRODUTOS COM SINCRONIZAÇÃO AO VIVO EM TEMPO REAL */}
+      <HomeLiveProducts
+        initialAllProducts={allProducts}
+        initialNewReleases={newReleases}
+        initialBestSellers={bestSellers}
+        initialPromo={promoProducts}
+        initialLuxury={luxuryProducts}
+      />
 
       {/* 4. MID-PAGE PROMOTIONAL BANNER */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -328,57 +280,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* 5. LANÇAMENTOS (NEW RELEASES) */}
-      {newReleases.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-8 border-b border-neutral-100 pb-4">
-            <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-neutral-400">
-                <Sparkles className="w-4 h-4 text-neutral-700" />
-                Recém-Chegados
-              </div>
-              <h2 className="text-2xl font-black text-neutral-900 tracking-tight">Lançamentos da Temporada</h2>
-            </div>
-            <Link
-              href="/produtos?newRelease=true"
-              className="text-xs font-bold uppercase tracking-wider text-neutral-900 hover:text-neutral-500 transition-colors flex items-center gap-1"
-            >
-              Ver Todos <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {newReleases.map((product) => (
-              <ProductCard key={product.id} product={product as any} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* 6. OFERTAS & PROMOÇÕES */}
-      {promoProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-8 border-b border-neutral-100 pb-4">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-rose-600">Preços Especiais</span>
-              <h2 className="text-2xl font-black text-neutral-900 tracking-tight">Ofertas Imperdíveis</h2>
-            </div>
-            <Link
-              href="/produtos?promo=true"
-              className="text-xs font-bold uppercase tracking-wider text-neutral-900 hover:text-neutral-500 transition-colors flex items-center gap-1"
-            >
-              Ver Todas as Ofertas <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {promoProducts.map((product) => (
-              <ProductCard key={product.id} product={product as any} />
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* 7. TRUST & QUALITY PROMISE */}
       <section className="bg-neutral-50 border-y border-neutral-200/70 py-16">

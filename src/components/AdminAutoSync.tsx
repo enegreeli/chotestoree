@@ -23,43 +23,9 @@ export default function AdminAutoSync() {
 
       setProductCount(serverCount);
 
-      // Case A: Server has products, save to local IndexedDB + localStorage
-      if (serverCount > 0) {
-        await saveLocalSnapshot(serverData);
-        setSyncStatus('saved');
-        return;
-      }
-
-      // Case B: Server has 0 products, check local snapshot for auto-heal
-      if (serverCount === 0 && !isCatalogExplicitlyWiped()) {
-        const localSnapshot = await loadLocalSnapshot();
-        if (localSnapshot && localSnapshot.products && localSnapshot.products.length > 0) {
-          setSyncStatus('syncing');
-          setMessage('Restaurando catálogo local...');
-
-          const restoreRes = await fetch('/api/admin/system/reset', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'import_json',
-              data: localSnapshot,
-            }),
-          });
-
-          if (restoreRes.ok) {
-            setProductCount(localSnapshot.products.length);
-            setSyncStatus('restored');
-            setMessage(`${localSnapshot.products.length} produto(s) preservados localmente!`);
-            setTimeout(() => {
-              setSyncStatus('idle');
-              setMessage(null);
-              if (window.location.pathname.includes('/admin/produtos') || window.location.pathname.includes('/admin/estoque')) {
-                window.location.reload();
-              }
-            }, 2000);
-          }
-        }
-      }
+      // Always mirror current server state to client storage for local export/backup
+      await saveLocalSnapshot(serverData);
+      setSyncStatus('saved');
     } catch (e) {
       console.warn('Sync check error:', e);
     }

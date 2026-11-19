@@ -164,6 +164,9 @@ class StoreDatabase {
       if ('in' in whereVal && Array.isArray(whereVal.in)) {
         return whereVal.in.includes(itemVal);
       }
+      if ('notIn' in whereVal && Array.isArray(whereVal.notIn)) {
+        return !whereVal.notIn.includes(itemVal);
+      }
       if ('gte' in whereVal && Number(itemVal) < Number(whereVal.gte)) return false;
       if ('gt' in whereVal && Number(itemVal) <= Number(whereVal.gt)) return false;
       if ('lte' in whereVal && Number(itemVal) > Number(whereVal.lte)) return false;

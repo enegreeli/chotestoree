@@ -106,7 +106,7 @@ export async function loadLocalSnapshot(): Promise<any | null> {
         }
       });
 
-      if (fromIdb && fromIdb.products && fromIdb.products.length > 0) {
+      if (fromIdb) {
         return fromIdb;
       }
     }

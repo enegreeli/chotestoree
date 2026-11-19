@@ -35,7 +35,7 @@ export default function NewProductPage() {
   const [promoPrice, setPromoPrice] = useState('');
   const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
-  const [isFeatured, setIsFeatured] = useState(false);
+  const [isFeatured, setIsFeatured] = useState(true);
   const [isBestSeller, setIsBestSeller] = useState(false);
   const [isNewRelease, setIsNewRelease] = useState(true);
   const [isPromo, setIsPromo] = useState(false);
@@ -43,13 +43,66 @@ export default function NewProductPage() {
   // Photos (PC, Celular ou Link)
   const [images, setImages] = useState<string[]>([]);
 
-  // Sizes and individual stock - starts clean at 0
+  // Sizes and individual stock - starts with ready stock to sell immediately
   const [sizes, setSizes] = useState([
-    { size: 'P', stock: '0', minStock: '2' },
-    { size: 'M', stock: '0', minStock: '2' },
-    { size: 'G', stock: '0', minStock: '2' },
-    { size: 'GG', stock: '0', minStock: '2' },
+    { size: 'P', stock: '5', minStock: '2' },
+    { size: 'M', stock: '5', minStock: '2' },
+    { size: 'G', stock: '5', minStock: '2' },
+    { size: 'GG', stock: '5', minStock: '2' },
   ]);
+  const [newSizeInput, setNewSizeInput] = useState('');
+
+  const addCustomSize = () => {
+    const trimmed = newSizeInput.trim().toUpperCase();
+    if (!trimmed) return;
+    if (sizes.some((s) => s.size.toUpperCase() === trimmed)) {
+      alert(`O tamanho ${trimmed} já existe na lista.`);
+      return;
+    }
+    setSizes([...sizes, { size: trimmed, stock: '5', minStock: '2' }]);
+    setNewSizeInput('');
+  };
+
+  const removeSize = (idx: number) => {
+    if (sizes.length <= 1) {
+      alert('O produto precisa ter pelo menos 1 tamanho.');
+      return;
+    }
+    setSizes(sizes.filter((_, i) => i !== idx));
+  };
+
+  const applyPreset = (type: 'roupas' | 'calcas' | 'calcados' | 'unico') => {
+    if (type === 'roupas') {
+      setSizes([
+        { size: 'P', stock: '5', minStock: '2' },
+        { size: 'M', stock: '5', minStock: '2' },
+        { size: 'G', stock: '5', minStock: '2' },
+        { size: 'GG', stock: '5', minStock: '2' },
+      ]);
+    } else if (type === 'calcas') {
+      setSizes([
+        { size: '36', stock: '5', minStock: '2' },
+        { size: '38', stock: '5', minStock: '2' },
+        { size: '40', stock: '5', minStock: '2' },
+        { size: '42', stock: '5', minStock: '2' },
+        { size: '44', stock: '5', minStock: '2' },
+        { size: '46', stock: '5', minStock: '2' },
+      ]);
+    } else if (type === 'calcados') {
+      setSizes([
+        { size: '38', stock: '5', minStock: '2' },
+        { size: '39', stock: '5', minStock: '2' },
+        { size: '40', stock: '5', minStock: '2' },
+        { size: '41', stock: '5', minStock: '2' },
+        { size: '42', stock: '5', minStock: '2' },
+        { size: '43', stock: '5', minStock: '2' },
+      ]);
+    } else if (type === 'unico') {
+      setSizes([
+        { size: 'UN', stock: '10', minStock: '2' },
+      ]);
+    }
+  };
 
   const handleCreateQuickCategory = async () => {
     if (!quickCatName.trim()) return;
@@ -454,23 +507,25 @@ export default function NewProductPage() {
         </div>
 
         {/* Sizes and Stock */}
-        <div className="p-6 bg-white border border-neutral-200 rounded-2xl shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="p-6 bg-white border border-neutral-200 rounded-2xl shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-100">
             <div>
               <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                3. Controle de Estoque por Tamanho (P, M, G, GG)
+                3. Controle de Tamanhos & Estoque Sincronizado
               </h2>
-              <p className="text-xs text-neutral-500">
-                Defina o estoque inicial de cada tamanho.
+              <p className="text-xs text-neutral-500 mt-0.5">
+                Defina os tamanhos e as quantidades em estoque. O site apresentará exatamente o que estiver configurado aqui.
               </p>
             </div>
-            <div className="flex items-center gap-1.5 self-start sm:self-auto">
+            {/* Stock Bulk Presets */}
+            <div className="flex items-center gap-1.5 self-start sm:self-auto flex-wrap">
+              <span className="text-[10px] font-bold text-neutral-400 uppercase mr-1">Preencher:</span>
               <button
                 type="button"
                 onClick={() => setSizes(sizes.map((s) => ({ ...s, stock: '0' })))}
                 className="px-2.5 py-1 text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 rounded-md hover:bg-amber-100"
               >
-                Zerar Todos (0 un.)
+                Zerar (0 un.)
               </button>
               <button
                 type="button"
@@ -486,15 +541,91 @@ export default function NewProductPage() {
               >
                 10 un. cada
               </button>
+              <button
+                type="button"
+                onClick={() => setSizes(sizes.map((s) => ({ ...s, stock: '20' })))}
+                className="px-2.5 py-1 text-[11px] font-bold bg-neutral-100 text-neutral-800 rounded-md hover:bg-neutral-200"
+              >
+                20 un. cada
+              </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          {/* Type Presets (Camisas vs Calças vs Calçados vs Único) */}
+          <div className="flex flex-wrap items-center gap-2 p-3 bg-neutral-50 rounded-xl border border-neutral-200">
+            <span className="text-[11px] font-bold text-neutral-600 uppercase">Modelos Rápidos:</span>
+            <button
+              type="button"
+              onClick={() => applyPreset('roupas')}
+              className="px-3 py-1 bg-white border border-neutral-200 hover:border-black rounded-lg text-xs font-semibold text-neutral-800 shadow-sm transition-all"
+            >
+              👕 Camisas / Polos (P, M, G, GG)
+            </button>
+            <button
+              type="button"
+              onClick={() => applyPreset('calcas')}
+              className="px-3 py-1 bg-white border border-neutral-200 hover:border-black rounded-lg text-xs font-semibold text-neutral-800 shadow-sm transition-all"
+            >
+              👖 Calças / Bermudas (36 a 46)
+            </button>
+            <button
+              type="button"
+              onClick={() => applyPreset('calcados')}
+              className="px-3 py-1 bg-white border border-neutral-200 hover:border-black rounded-lg text-xs font-semibold text-neutral-800 shadow-sm transition-all"
+            >
+              👟 Calçados (38 a 43)
+            </button>
+            <button
+              type="button"
+              onClick={() => applyPreset('unico')}
+              className="px-3 py-1 bg-white border border-neutral-200 hover:border-black rounded-lg text-xs font-semibold text-neutral-800 shadow-sm transition-all"
+            >
+              🧢 Tamanho Único (UN)
+            </button>
+          </div>
+
+          {/* Add Custom Size Bar */}
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={newSizeInput}
+              onChange={(e) => setNewSizeInput(e.target.value)}
+              placeholder="Adicionar tamanho customizado (Ex: 48, 2GG, Infantil...)"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addCustomSize();
+                }
+              }}
+              className="flex-1 max-w-sm px-3 py-1.5 text-xs border border-neutral-300 rounded-lg outline-none focus:border-black font-medium"
+            />
+            <button
+              type="button"
+              onClick={addCustomSize}
+              className="px-4 py-1.5 bg-neutral-900 text-white rounded-lg text-xs font-bold hover:bg-black transition-colors flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" /> Adicionar Tamanho
+            </button>
+          </div>
+
+          {/* Dynamic Sizes Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
             {sizes.map((s, idx) => (
-              <div key={s.size} className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl space-y-2">
-                <span className="text-sm font-black text-neutral-900 block text-center">
-                  Tamanho {s.size}
-                </span>
+              <div key={`${s.size}-${idx}`} className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl space-y-2 relative group hover:border-neutral-400 transition-colors">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-black text-neutral-900">
+                    Tam. {s.size}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeSize(idx)}
+                    title="Excluir este tamanho"
+                    className="text-neutral-400 hover:text-rose-600 transition-colors p-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
                 <div>
                   <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-0.5">
                     Estoque Inicial
@@ -504,7 +635,7 @@ export default function NewProductPage() {
                     min="0"
                     value={s.stock}
                     onChange={(e) => updateSize(idx, 'stock', e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs font-bold border border-neutral-300 rounded-lg font-mono outline-none focus:border-black text-center"
+                    className="w-full px-2 py-1 text-xs font-bold border border-neutral-300 rounded-lg font-mono outline-none focus:border-black text-center bg-white"
                   />
                 </div>
                 <div>
@@ -516,7 +647,7 @@ export default function NewProductPage() {
                     min="0"
                     value={s.minStock}
                     onChange={(e) => updateSize(idx, 'minStock', e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs border border-neutral-300 rounded-lg font-mono outline-none focus:border-black text-center"
+                    className="w-full px-2 py-1 text-xs border border-neutral-300 rounded-lg font-mono outline-none focus:border-black text-center bg-white"
                   />
                 </div>
               </div>

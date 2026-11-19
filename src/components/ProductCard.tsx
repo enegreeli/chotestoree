@@ -47,6 +47,14 @@ export default function ProductCard({ product }: ProductCardProps) {
     ? Math.round(((product.price - product.promoPrice) / product.price) * 100)
     : 0;
 
+  // Real-time stock calculation fallback
+  const calculatedTotalStock = product.totalStock !== undefined
+    ? product.totalStock
+    : (product.sizes || []).reduce((acc: number, s: any) => acc + (Number(s.stock) || 0), 0);
+  const isOutOfStock = product.isOutOfStock !== undefined
+    ? product.isOutOfStock
+    : (calculatedTotalStock <= 0);
+
   const handleQuickAdd = (e: React.MouseEvent, size: string, maxStock: number) => {
     e.preventDefault();
     e.stopPropagation();
@@ -76,7 +84,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     <div className="group relative flex flex-col bg-white rounded-xl overflow-hidden border border-neutral-100 hover:border-neutral-300 transition-all duration-300 hover:shadow-lg">
       {/* Badges */}
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5 pointer-events-none">
-        {product.isOutOfStock ? (
+        {isOutOfStock ? (
           <span className="bg-neutral-900 text-white text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded">
             Esgotado
           </span>
@@ -131,21 +139,21 @@ export default function ProductCard({ product }: ProductCardProps) {
       </Link>
 
       {/* Quick Size Bar (visible on card) */}
-      {product.sizes && product.sizes.length > 0 && !product.isOutOfStock && (
+      {product.sizes && product.sizes.length > 0 && !isOutOfStock && (
         <div className="px-3 pt-2.5 flex items-center justify-between border-t border-neutral-50 bg-neutral-50/50">
           <span className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">Tamanhos:</span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-wrap justify-end">
             {product.sizes.map((s) => {
-              const isAvailable = s.stock > 0;
+              const isAvailable = Number(s.stock) > 0;
               return (
                 <button
-                  key={s.id}
+                  key={s.id || s.size}
                   disabled={!isAvailable}
-                  onClick={(e) => handleQuickAdd(e, s.size, s.stock)}
-                  title={isAvailable ? `Adicionar tam. ${s.size} (${s.stock} un.)` : 'Tamanho esgotado'}
-                  className={`text-[11px] font-semibold w-6 h-6 rounded flex items-center justify-center transition-all ${
+                  onClick={(e) => handleQuickAdd(e, s.size, Number(s.stock))}
+                  title={isAvailable ? `Adicionar tam. ${s.size} (${s.stock} un. em estoque)` : 'Tamanho esgotado'}
+                  className={`text-[11px] font-semibold min-w-[26px] px-1.5 h-6 rounded flex items-center justify-center transition-all ${
                     !isAvailable
-                      ? 'text-neutral-300 line-through cursor-not-allowed'
+                      ? 'text-neutral-300 line-through cursor-not-allowed bg-neutral-100/50'
                       : selectedSize === s.size && addedNotice
                       ? 'bg-emerald-600 text-white'
                       : 'bg-white border border-neutral-200 text-neutral-800 hover:border-black hover:bg-black hover:text-white'
@@ -163,7 +171,15 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
           <span>{product.brand || product.team || 'Grife'}</span>
-          <span>{product.season || ''}</span>
+          <span>
+            {calculatedTotalStock > 0 ? (
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                {calculatedTotalStock} un. disp.
+              </span>
+            ) : (
+              <span className="text-[10px] font-bold text-neutral-400">Esgotado</span>
+            )}
+          </span>
         </div>
 
         <Link href={`/produto/${product.slug}`} className="group-hover:text-neutral-600 transition-colors">

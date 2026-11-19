@@ -8,11 +8,8 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<Record<string, string>>({
     store_name: 'CHOTE KITS',
     store_tagline: 'Loja Oficial de Mantos & Camisas de Futebol Premium',
-    whatsapp_number: '5511998765432',
-    instagram_handle: '@chotestore.oficial',
-    contact_email: 'contato@chotestore.com',
-    store_address: 'Av. Paulista, 1578 - Bela Vista, São Paulo - SP',
-    banner_title: 'TEMPORADA 2024/2025',
+    whatsapp_number: '+4196443103',
+    instagram_handle: '@chotestore',
     banner_subtitle: 'Mantos oficiais dos maiores clubes do mundo com tecnologia de ponta e acabamento premium.',
     banner_image_url: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=1600',
     exchange_policy: 'Prazo de troca de até 30 dias corridos após o recebimento. O produto deve estar sem marcas de uso, com etiquetas intactas e na embalagem original.',
@@ -167,9 +164,8 @@ export default function AdminSettingsPage() {
 
       {feedback && (
         <div
-          className={`p-4 rounded-xl text-xs font-semibold flex items-center gap-2 ${
-            feedback.error ? 'bg-rose-50 text-rose-800 border border-rose-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-          }`}
+          className={`p-4 rounded-xl text-xs font-semibold flex items-center gap-2 ${feedback.error ? 'bg-rose-50 text-rose-800 border border-rose-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+            }`}
         >
           {feedback.error ? <AlertCircle className="w-4 h-4 flex-shrink-0" /> : <CheckCircle className="w-4 h-4 flex-shrink-0" />}
           <span>{feedback.text}</span>

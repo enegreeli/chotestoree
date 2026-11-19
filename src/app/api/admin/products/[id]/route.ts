@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { getCurrentUser, isStaffOrAdmin } from '@/lib/auth';
 import { storeDb } from '@/lib/storeDb';
@@ -118,12 +119,26 @@ export async function PUT(
 
       // 3. Update sizes and stock if provided
       if (sizes && Array.isArray(sizes)) {
+        const submittedSizes = sizes.map((s: any) => String(s.size).trim()).filter(Boolean);
+
+        // Delete any sizes that were removed in the edit form
+        if (submittedSizes.length > 0) {
+          await tx.productSizeStock.deleteMany({
+            where: {
+              productId: id,
+              size: { notIn: submittedSizes },
+            },
+          });
+        }
+
         for (const s of sizes) {
+          const sizeName = String(s.size).trim();
+          if (!sizeName) continue;
           const targetStock = parseInt(s.stock, 10) || 0;
           const targetMin = parseInt(s.minStock, 10) || 2;
 
           const existing = await tx.productSizeStock.findFirst({
-            where: { productId: id, size: s.size },
+            where: { productId: id, size: sizeName },
           });
 
           if (existing) {
@@ -132,7 +147,7 @@ export async function PUT(
                 data: {
                   productId: id,
                   sizeStockId: existing.id,
-                  size: s.size,
+                  size: sizeName,
                   type: 'AJUSTE',
                   quantity: Math.abs(targetStock - existing.stock),
                   previousStock: existing.stock,
@@ -154,7 +169,7 @@ export async function PUT(
             const createdSize = await tx.productSizeStock.create({
               data: {
                 productId: id,
-                size: s.size,
+                size: sizeName,
                 stock: targetStock,
                 minStock: targetMin,
               },
@@ -165,7 +180,7 @@ export async function PUT(
                 data: {
                   productId: id,
                   sizeStockId: createdSize.id,
-                  size: s.size,
+                  size: sizeName,
                   type: 'ENTRADA',
                   quantity: targetStock,
                   previousStock: 0,
@@ -181,6 +196,13 @@ export async function PUT(
 
       return prod;
     });
+
+    try {
+      revalidatePath('/', 'page');
+      revalidatePath('/produtos', 'page');
+      revalidatePath('/admin/produtos', 'page');
+      revalidatePath('/admin/estoque', 'page');
+    } catch {}
 
     return NextResponse.json({
       success: true,
@@ -213,6 +235,13 @@ export async function DELETE(
     await prisma.productImage.deleteMany({ where: { productId: id } });
     await prisma.wishlist.deleteMany({ where: { productId: id } });
     await prisma.product.delete({ where: { id } });
+
+    try {
+      revalidatePath('/', 'page');
+      revalidatePath('/produtos', 'page');
+      revalidatePath('/admin/produtos', 'page');
+      revalidatePath('/admin/estoque', 'page');
+    } catch {}
 
     return NextResponse.json({
       success: true,

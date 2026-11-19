@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getCurrentUser, isStaffOrAdmin } from '@/lib/auth';
 import { storeDb } from '@/lib/storeDb';
 
@@ -23,18 +24,19 @@ export async function POST(req: Request) {
     const user = await getCurrentUser();
     const isAuthed = user && isStaffOrAdmin(user.role);
 
-    const body = await req.json();
-    const { action, productId, data } = body;
-
-    const serverIsEmpty = (storeDb.getRawData().products || []).length === 0;
-
-    // Allow auto-heal restore if server is completely empty
-    if (!isAuthed && !(action === 'import_json' && serverIsEmpty)) {
+    if (!isAuthed) {
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
     }
 
+    const body = await req.json();
+    const { action, productId, data } = body;
+
     if (action === 'zero_all_stock') {
       const affected = storeDb.zeroAllStock();
+      try {
+        revalidatePath('/', 'page');
+        revalidatePath('/produtos', 'page');
+      } catch {}
       return NextResponse.json({
         success: true,
         message: `Estoque de todos os produtos foi zerado com sucesso (${affected} tamanhos zerados).`,
@@ -46,6 +48,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'ID do produto não informado' }, { status: 400 });
       }
       const affected = storeDb.zeroProductStock(productId);
+      try {
+        revalidatePath('/', 'page');
+        revalidatePath('/produtos', 'page');
+      } catch {}
       return NextResponse.json({
         success: true,
         message: `Estoque do produto zerado com sucesso (${affected} tamanhos zerados).`,
@@ -54,6 +60,10 @@ export async function POST(req: Request) {
 
     if (action === 'wipe_products') {
       const result = storeDb.wipeAllProducts();
+      try {
+        revalidatePath('/', 'page');
+        revalidatePath('/produtos', 'page');
+      } catch {}
       return NextResponse.json({
         success: true,
         message: `Catálogo de produtos completamente limpo (${result.productsRemoved} produtos removidos). Pronto para cadastrar do zero.`,
@@ -62,6 +72,10 @@ export async function POST(req: Request) {
 
     if (action === 'wipe_all_data') {
       storeDb.wipeEverything(true);
+      try {
+        revalidatePath('/', 'page');
+        revalidatePath('/produtos', 'page');
+      } catch {}
       return NextResponse.json({
         success: true,
         message: 'Loja resetada com sucesso para o estado inicial limpo. O usuário administrador foi preservado.',
@@ -75,6 +89,10 @@ export async function POST(req: Request) {
       const current = storeDb.getRawData();
       Object.assign(current, data);
       storeDb.save();
+      try {
+        revalidatePath('/', 'page');
+        revalidatePath('/produtos', 'page');
+      } catch {}
       return NextResponse.json({ success: true, message: 'Dados restaurados com sucesso!' });
     }
 

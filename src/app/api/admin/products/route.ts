@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { getCurrentUser, isStaffOrAdmin } from '@/lib/auth';
 import { storeDb } from '@/lib/storeDb';
@@ -206,6 +207,13 @@ export async function POST(req: Request) {
 
       return created;
     });
+
+    try {
+      revalidatePath('/', 'page');
+      revalidatePath('/produtos', 'page');
+      revalidatePath('/admin/produtos', 'page');
+      revalidatePath('/admin/estoque', 'page');
+    } catch {}
 
     return NextResponse.json({
       success: true,

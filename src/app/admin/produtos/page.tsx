@@ -79,21 +79,29 @@ export default function AdminProductsPage() {
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Tem certeza que deseja excluir o produto "${name}"?`)) return;
 
+    // Optimistic UI update: remove immediately from current view
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+
     try {
       const res = await fetch(`/api/admin/products/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (res.ok) {
         if (data.snapshot) {
           await saveLocalSnapshot(data.snapshot);
+          if (!data.snapshot.products || data.snapshot.products.length === 0) {
+            markCatalogWiped();
+          }
         }
         setActionNotice(data.message || 'Produto removido com sucesso.');
         fetchProducts();
         setTimeout(() => setActionNotice(null), 3000);
       } else {
         alert(data.error || 'Erro ao excluir');
+        fetchProducts();
       }
     } catch {
       alert('Erro ao excluir');
+      fetchProducts();
     }
   };
 
@@ -124,6 +132,7 @@ export default function AdminProductsPage() {
     if (!confirm('PERIGO: Deseja EXCLUIR TODOS OS PRODUTOS do catálogo para começar a cadastrar tudo do zero?')) {
       return;
     }
+    setProducts([]);
     try {
       const res = await fetch('/api/admin/system/reset', {
         method: 'POST',
@@ -138,9 +147,11 @@ export default function AdminProductsPage() {
         setTimeout(() => setActionNotice(null), 4000);
       } else {
         alert(data.error || 'Erro ao limpar catálogo');
+        fetchProducts();
       }
     } catch {
       alert('Erro ao limpar catálogo');
+      fetchProducts();
     }
   };
 

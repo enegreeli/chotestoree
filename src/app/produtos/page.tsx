@@ -101,7 +101,9 @@ function CatalogContent() {
       fetch(`/api/products?${params.toString()}`, { cache: 'no-store' })
         .then((res) => res.json())
         .then((data) => {
-          if (data.products) setProducts(data.products);
+          if (data.products) {
+            setProducts(data.products);
+          }
         })
         .catch(console.error)
         .finally(() => {
@@ -111,10 +113,10 @@ function CatalogContent() {
 
     fetchCatalog();
 
-    // Live catalog stock & products polling every 6 seconds
+    // Live catalog stock & products polling every 3 seconds
     const interval = setInterval(() => {
       fetchCatalog(true);
-    }, 6000);
+    }, 3000);
 
     const onFocus = () => fetchCatalog(true);
     window.addEventListener('focus', onFocus);
