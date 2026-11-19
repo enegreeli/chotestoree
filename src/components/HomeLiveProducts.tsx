@@ -89,6 +89,16 @@ export default function HomeLiveProducts({
 
   return (
     <div className="space-y-16">
+      {/* 0. ESTADO VAZIO LIMPO SE NÃO HOUVER PRODUTOS */}
+      {allProducts.length === 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="p-12 text-center bg-neutral-50 rounded-2xl border border-dashed border-neutral-300">
+            <span className="text-sm font-bold text-neutral-800">Catálogo pronto para novos produtos</span>
+            <p className="text-xs text-neutral-500 mt-1">Nenhum produto cadastrado no momento. Cadastre camisetas, calças ou qualquer produto pelo painel para exibi-los aqui imediatamente.</p>
+          </div>
+        </section>
+      )}
+
       {/* 1. COLEÇÃO PRINCIPAL & NOVIDADES */}
       {allProducts.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

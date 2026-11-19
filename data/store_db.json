@@ -146,96 +146,10 @@
       "updatedAt": "2026-11-09T16:26:50.189Z"
     }
   ],
-  "products": [
-    {
-      "id": "prod-corinthians-1990",
-      "name": "Corinthians 1990 Retrô Kalunga",
-      "slug": "corinthians-1990",
-      "sku": "CK-COR-1990",
-      "barcode": null,
-      "description": "Manto histórico do Sport Club Corinthians Paulista do ano de 1990, conquista do primeiro Campeonato Brasileiro. Confeccionada em tecido nobre com gola polo preta clássica, patch de campeão e patrocínio Kalunga de época.",
-      "categoryId": "dd3b5ce5-0974-4c43-b34f-fa0ecdbdcf9d",
-      "brand": "Corinthians",
-      "team": "Corinthians",
-      "country": "Brasil",
-      "season": "1990",
-      "modelType": "RETRO",
-      "supplier": "Chote Store",
-      "acquisitionCost": 35,
-      "price": 90,
-      "promoPrice": 60,
-      "isFeatured": true,
-      "isBestSeller": true,
-      "isNewRelease": true,
-      "isPromo": true,
-      "isActive": true,
-      "createdAt": "2026-11-19T21:00:00.000Z",
-      "updatedAt": "2026-11-19T21:00:00.000Z"
-    }
-  ],
-  "productImages": [
-    {
-      "id": "img-cor-1990-1",
-      "productId": "prod-corinthians-1990",
-      "url": "/images/products/corinthians-1990.jpg",
-      "isPrimary": true,
-      "order": 0,
-      "createdAt": "2026-11-19T21:00:00.000Z"
-    }
-  ],
-  "productSizeStocks": [
-    {
-      "id": "size-cor-1990-p",
-      "productId": "prod-corinthians-1990",
-      "size": "P",
-      "stock": 0,
-      "minStock": 2,
-      "createdAt": "2026-11-19T21:00:00.000Z",
-      "updatedAt": "2026-11-19T21:00:00.000Z"
-    },
-    {
-      "id": "size-cor-1990-m",
-      "productId": "prod-corinthians-1990",
-      "size": "M",
-      "stock": 0,
-      "minStock": 2,
-      "createdAt": "2026-11-19T21:00:00.000Z",
-      "updatedAt": "2026-11-19T21:00:00.000Z"
-    },
-    {
-      "id": "size-cor-1990-g",
-      "productId": "prod-corinthians-1990",
-      "size": "G",
-      "stock": 5,
-      "minStock": 2,
-      "createdAt": "2026-11-19T21:00:00.000Z",
-      "updatedAt": "2026-11-19T21:00:00.000Z"
-    },
-    {
-      "id": "size-cor-1990-gg",
-      "productId": "prod-corinthians-1990",
-      "size": "GG",
-      "stock": 0,
-      "minStock": 2,
-      "createdAt": "2026-11-19T21:00:00.000Z",
-      "updatedAt": "2026-11-19T21:00:00.000Z"
-    }
-  ],
-  "stockMovements": [
-    {
-      "id": "mov-cor-1990-1",
-      "productId": "prod-corinthians-1990",
-      "sizeStockId": "size-cor-1990-g",
-      "size": "G",
-      "type": "ENTRADA",
-      "quantity": 5,
-      "previousStock": 0,
-      "newStock": 5,
-      "reason": "Cadastro inicial do produto",
-      "createdById": "user-chote-store-admin",
-      "createdAt": "2026-11-19T21:00:00.000Z"
-    }
-  ],
+  "products": [],
+  "productImages": [],
+  "productSizeStocks": [],
+  "stockMovements": [],
   "orders": [],
   "orderItems": [],
   "orderStatusHistories": [],

@@ -15,6 +15,7 @@ function CatalogContent() {
   const [totalCatalogCount, setTotalCatalogCount] = useState(0);
   const [brandCounts, setBrandCounts] = useState<Record<string, number>>({});
   const [modelCounts, setModelCounts] = useState<Record<string, number>>({});
+  const [availableSizes, setAvailableSizes] = useState<string[]>(['P', 'M', 'G', 'GG']);
   const [loading, setLoading] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -50,23 +51,30 @@ function CatalogContent() {
           setTotalCatalogCount(data.products.length);
           const bCounts: Record<string, number> = {};
           const mCounts: Record<string, number> = {};
+          const sSet = new Set<string>();
           data.products.forEach((p: any) => {
             if (p.brand) {
               const b = p.brand.trim();
               bCounts[b] = (bCounts[b] || 0) + 1;
-              bCounts[b.toLowerCase()] = (bCounts[b.toLowerCase()] || 0) + 1;
             }
             if (p.team) {
               const t = p.team.trim();
               bCounts[t] = (bCounts[t] || 0) + 1;
-              bCounts[t.toLowerCase()] = (bCounts[t.toLowerCase()] || 0) + 1;
             }
             if (p.modelType) {
               mCounts[p.modelType] = (mCounts[p.modelType] || 0) + 1;
             }
+            if (p.sizes && Array.isArray(p.sizes)) {
+              p.sizes.forEach((s: any) => {
+                if (s.size) sSet.add(s.size);
+              });
+            }
           });
           setBrandCounts(bCounts);
           setModelCounts(mCounts);
+          if (sSet.size > 0) {
+            setAvailableSizes(Array.from(sSet));
+          }
         }
       })
       .catch(console.error);
@@ -209,38 +217,30 @@ function CatalogContent() {
       <div className="pt-4 border-t border-neutral-100">
         <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-900 mb-3">Grifes & Marcas</h4>
         <div className="space-y-1.5 text-xs">
-          {[
-            { label: 'Todas as Grifes', value: '' },
-            { label: 'Corinthians', value: 'Corinthians' },
-            { label: 'Flamengo', value: 'Flamengo' },
-            { label: 'Palmeiras', value: 'Palmeiras' },
-            { label: 'São Paulo', value: 'São Paulo' },
-            { label: 'Real Madrid', value: 'Real Madrid' },
-            { label: 'Barcelona', value: 'Barcelona' },
-            { label: 'Lacoste', value: 'Lacoste' },
-            { label: 'Hugo Boss', value: 'Hugo Boss' },
-            { label: 'Ralph Lauren', value: 'Ralph Lauren' },
-            { label: 'Tommy Hilfiger', value: 'Tommy Hilfiger' },
-            { label: 'Balenciaga', value: 'Balenciaga' },
-            { label: 'Nike Sportswear', value: 'Nike' },
-            { label: 'Adidas Originals', value: 'Adidas' },
-          ].map((b) => {
-            const count = b.value === '' 
-              ? totalCatalogCount 
-              : (brandCounts[b.value] || brandCounts[b.value.toLowerCase()] || 0);
-            return (
+          <button
+            onClick={() => setSelectedBrand('')}
+            className={`w-full text-left py-1 px-2 rounded transition-colors flex items-center justify-between ${
+              !selectedBrand ? 'font-bold bg-neutral-100 text-black' : 'text-neutral-600 hover:text-black'
+            }`}
+          >
+            <span>Todas as Marcas</span>
+            <span className="text-[10px] text-neutral-400">({totalCatalogCount})</span>
+          </button>
+          {Object.keys(brandCounts)
+            .filter((b) => brandCounts[b] > 0 && b === b.trim())
+            .sort()
+            .map((bName) => (
               <button
-                key={b.value}
-                onClick={() => setSelectedBrand(selectedBrand === b.value ? '' : b.value)}
+                key={bName}
+                onClick={() => setSelectedBrand(selectedBrand === bName ? '' : bName)}
                 className={`w-full text-left py-1 px-2 rounded transition-colors flex items-center justify-between ${
-                  selectedBrand === b.value ? 'font-bold bg-neutral-100 text-black' : 'text-neutral-600 hover:text-black'
+                  selectedBrand === bName ? 'font-bold bg-neutral-100 text-black' : 'text-neutral-600 hover:text-black'
                 }`}
               >
-                <span>{b.label}</span>
-                <span className="text-[10px] text-neutral-400">({count})</span>
+                <span>{bName}</span>
+                <span className="text-[10px] text-neutral-400">({brandCounts[bName] || 0})</span>
               </button>
-            );
-          })}
+            ))}
         </div>
       </div>
 
@@ -276,7 +276,7 @@ function CatalogContent() {
       <div className="pt-4 border-t border-neutral-100">
         <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-900 mb-3">Tamanho</h4>
         <div className="grid grid-cols-4 gap-2">
-          {['P', 'M', 'G', 'GG'].map((sz) => (
+          {availableSizes.map((sz) => (
             <button
               key={sz}
               onClick={() => setSelectedSize(selectedSize === sz ? '' : sz)}
